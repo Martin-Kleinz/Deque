@@ -823,8 +823,7 @@ namespace sjtu
       (*pos.it)->arr[pos.id] = new T(value);
       pos.p_ = (*pos.it)->arr[pos.id];
       ++size_;
-      typename double_list<CircularArray<T> *>::iterator iter;
-      iter = pos.it;
+      iterator iter = pos;
       if ((*pos.it)->full())
       {
         CircularArray<T> *leftarr = new CircularArray<T>(capa);
@@ -832,22 +831,22 @@ namespace sjtu
         int i = 0;
         while (i <= (*pos.it)->size_ / 2)
         {
-          leftarr->arr[leftarr->tail++] = pos.p_;
+          leftarr->arr[leftarr->tail++] = iter.p_;
           leftarr->size_++;
           i++;
-          pos++;
+          iter++;
         }
         while (i < (*pos.it)->size_)
         {
-          rightarr->arr[rightarr->tail++] = pos.p_;
+          rightarr->arr[rightarr->tail++] = iter.p_;
           rightarr->size_++;
           i++;
-          pos++;
+          iter++;
         }
-        iter = dq->erase(iter);
-        iter = dq->insert(iter, rightarr);
-        iter = dq->insert(iter, leftarr);
-        pos.it = iter;
+        auto curit = dq->erase(pos.it);
+        curit = dq->insert(curit, rightarr);
+        curit = dq->insert(curit, leftarr);
+        pos.it = curit;
       }
       return pos;
     }
