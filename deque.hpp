@@ -821,11 +821,11 @@ namespace sjtu
       for (int i = (pos.id + sum - 1) % (*pos.it)->capa, done = 0; done < sum; i = (i - 1) % (*pos.it)->capa, ++done)
         (*pos.it)->arr[(i + 1) % (*pos.it)->capa] = (*pos.it)->arr[i];
       (*pos.it)->arr[pos.id] = new T(value);
-      pos.p_ = (*pos.it)->arr[pos.id];
       ++size_;
       iterator iter = pos;
       if ((*pos.it)->full())
       {
+        int index = pos.id - (*pos.it)->head;
         CircularArray<T> *leftarr = new CircularArray<T>(capa);
         CircularArray<T> *rightarr = new CircularArray<T>(capa);
         int i = 0;
@@ -847,6 +847,13 @@ namespace sjtu
         curit = dq->insert(curit, rightarr);
         curit = dq->insert(curit, leftarr);
         pos.it = curit;
+        pos.id = index;
+        if(index >= (*pos.it)->size_)
+        {
+          pos.id = index - (*pos.it)->size_;
+          ++pos.it;
+        }
+        pos.p_ = (*pos.it)->arr[pos.id];
       }
       return pos;
     }
