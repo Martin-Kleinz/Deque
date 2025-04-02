@@ -37,7 +37,7 @@ void TestInteger()
     }
     for (int i = 0; i < N; ++i) {
         if (!(vInt[i] == dInt[i]))
-            error();
+            std::cout << i << '\n',error();
     }
     std::cout << "Correct." << std::endl;
 }
@@ -155,7 +155,7 @@ void TestInsertAndErase()
     dInt.erase(dInt.begin() + 2333);
     for (long long i = 0; i < N; ++i) {
         if (!(*(dInt.begin() + i) == vInt[i]))
-            error();
+            std::cout << i << '\n', error();
     }
     std::cout << "Correct." << std::endl;
 }
