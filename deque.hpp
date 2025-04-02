@@ -110,12 +110,10 @@ namespace sjtu
       {
         if (!current)
         {
-          std::cerr << "Iterator current is null!" << std::endl;
           throw sjtu::index_out_of_bound();
         }
         if (current == list->head || current == list->tail)
         {
-          std::cerr << "Iterator points to head or tail!" << std::endl;
           throw sjtu::index_out_of_bound();
         }
         return *(current->value);
@@ -294,6 +292,10 @@ namespace sjtu
       iterator(size_t n, double_list<CircularArray<T> *> *d, typename double_list<CircularArray<T> *>::iterator od, T *ptr) : id(n), deq(d), it(od), p_(ptr) {}
       iterator operator+(const int &n) const
       {
+        if (n < 0)
+        {
+          return (*this) - (-n);
+        }
         iterator result = *this;
         int rest = n;
         while (rest > 0)
@@ -308,7 +310,16 @@ namespace sjtu
           rest -= cur->tail - result.id;
           result.it++;
           if (result.it == deq->end())
+          {
+            if (rest == 0)
+            {
+              result.it--;
+              result.id = (*result.it)->tail;
+              result.p_ = nullptr;
+              return result;
+            }
             throw sjtu::index_out_of_bound();
+          }
           else
             result.id = 0, result.p_ = (*result.it)->arr[result.id];
         }
@@ -316,6 +327,10 @@ namespace sjtu
       }
       iterator operator-(const int &n) const
       {
+        if (n < 0)
+        {
+          return (*this) + (-n);
+        }
         iterator result = *this;
         int rest = n;
         while (rest)
@@ -388,7 +403,26 @@ namespace sjtu
       iterator operator++(int)
       {
         iterator result = *this;
-        *this = *this + 1;
+        if (id < (*it)->tail - 1)
+        {
+          ++id;
+          p_ = (*it)->arr[id];
+        }
+        else
+        {
+          ++it;
+          if (it == deq->end())
+          {
+            it--;
+            id = (*it)->tail;
+            p_ = nullptr;
+          }
+          else
+          {
+            id = 0;
+            p_ = (*it)->arr[id];
+          }
+        }
         return result;
       }
       /**
@@ -507,6 +541,10 @@ namespace sjtu
       const_iterator(int n, double_list<CircularArray<T> *> *d, typename double_list<CircularArray<T> *>::iterator od, T *ptr) : id(n), deq(d), it(od), p_(ptr) {}
       const_iterator operator+(const int &n) const
       {
+        if (n < 0)
+        {
+          return (*this) - (-n);
+        }
         const_iterator result = *this;
         int rest = n;
         while (rest)
@@ -521,7 +559,17 @@ namespace sjtu
           rest -= cur->tail - result.id;
           result.it++;
           if (result.it == deq->end())
-            throw sjtu::index_out_of_bound();
+          {
+            if (rest == 0)
+            {
+              result.it--;
+              result.id = (*result.it)->tail;
+              result.p_ = nullptr;
+              return result;
+            }
+            else
+              throw sjtu::index_out_of_bound();
+          }
           else
             result.id = 0, result.p_ = (*result.it)->arr[result.id];
         }
@@ -529,6 +577,10 @@ namespace sjtu
       }
       const_iterator operator-(const int &n) const
       {
+        if (n < 0)
+        {
+          return (*this) + (-n);
+        }
         const_iterator result = *this;
         int rest = n;
         while (rest)
@@ -556,11 +608,11 @@ namespace sjtu
        * if they point to different vectors, throw
        * invaild_iterator.
        */
-      int operator-(const iterator &rhs) const
+      int operator-(const const_iterator &rhs) const
       {
         if (this->deq != rhs.deq)
           throw sjtu::invalid_iterator();
-        iterator cur = *this;
+        const_iterator cur = *this;
         int diff1 = 0;
         while (true)
         {
@@ -600,8 +652,27 @@ namespace sjtu
        */
       const_iterator operator++(int)
       {
-        iterator result = *this;
-        *this = *this + 1;
+        const_iterator result = *this;
+        if (id < (*it)->tail - 1)
+        {
+          ++id;
+          p_ = (*it)->arr[id];
+        }
+        else
+        {
+          ++it;
+          if (it == deq->end())
+          {
+            it--;
+            id = (*it)->tail;
+            p_ = nullptr;
+          }
+          else
+          {
+            id = 0;
+            p_ = (*it)->arr[id];
+          }
+        }
         return result;
       }
       /**
@@ -636,7 +707,7 @@ namespace sjtu
        */
       const_iterator operator--(int)
       {
-        iterator result = *this;
+        const_iterator result = *this;
         *this = *this - 1;
         return result;
       }
@@ -908,6 +979,26 @@ namespace sjtu
 
     iterator erase(iterator pos)
     {
+      if (empty())
+        throw sjtu::container_is_empty();
+      if (pos.deq != this->dq || pos == end())
+        throw sjtu::invalid_iterator();
+        
+        if (pos == end() - 1) 
+        {
+          auto last_block = --dq->end();
+          int last_index = (*last_block)->tail - 1;
+          delete (*last_block)->arr[last_index];
+          (*last_block)->arr[last_index] = nullptr;
+          (*last_block)->tail--;
+          size_--;
+          if ((*last_block)->tail == 0) 
+          {
+              dq->erase(last_block);
+              return end();
+          }
+          return end() - 1;
+      }
       int c = std::max(capa, static_cast<int>(std::sqrt(size_)));
       if (pos.it != dq->begin())
       {
@@ -916,52 +1007,75 @@ namespace sjtu
         if ((*pos.it)->tail + (*prev_it)->tail < c)
         {
           CircularArray<T> *newarr = new CircularArray<T>(c);
-          int ind = pos.id;
-          ind += (*prev_it)->tail;
+          int ind = pos.id + (*prev_it)->tail;
           for (int i = 0; i < (*prev_it)->tail; ++i)
           {
             newarr->arr[newarr->tail++] = (*prev_it)->arr[i];
           }
-          for (int i = 0; i < (*pos.it)->tail; ++i)
+          for (int i = 0; i < pos.id; ++i)
           {
             newarr->arr[newarr->tail++] = (*pos.it)->arr[i];
           }
-          delete *prev_it;
-          dq->erase(prev_it);
-          delete *pos.it;
-          dq->erase(pos.it);
-          pos.it = dq->insert(pos.it, newarr);
+          for (int i = pos.id + 1; i < (*pos.it)->tail; ++i)
+          {
+            newarr->arr[newarr->tail++] = (*pos.it)->arr[i];
+          }
+          // delete *prev_it;
+          auto iter = dq->erase(prev_it);
+          // delete *pos.it;
+          iter = dq->erase(iter);
+          pos.it = dq->insert(iter, newarr);
           pos.id = ind;
           pos.p_ = (*pos.it)->arr[pos.id];
+          size_--;
+          return pos;
         }
       }
-      if (empty())
-        throw sjtu::container_is_empty();
-      if (pos.deq != this->dq || pos == end())
-        throw sjtu::invalid_iterator();
       int index = pos.id;
       auto cur = (*pos.it);
       delete cur->arr[index];
-      for (int i = index + 1; i < cur->tail; i++)
+      for (int i = index; i < cur->tail - 1; i++)
         cur->arr[i] = cur->arr[i + 1];
+      cur->arr[cur->tail - 1] = nullptr;
       cur->tail--;
       size_--;
       if (cur->tail == 0)
       {
-        delete *pos.it;
         pos.it = dq->erase(pos.it);
-        pos.id = 0;
         if (pos.it != dq->end())
         {
+          pos.id = 0;
           pos.p_ = (*pos.it)->arr[0];
         }
         else
         {
+          pos.it--;
+          pos.id = (*pos.it)->tail;
           pos.p_ = nullptr;
         }
       }
       else
-        pos.p_ = cur->arr[index];
+      {
+        if (index < cur->tail)
+        {
+          pos.p_ = cur->arr[index];
+        }
+        else
+        {
+          pos.it++;
+          if (pos.it != dq->end())
+          {
+            pos.id = 0;
+            pos.p_ = (*pos.it)->arr[0];
+          }
+          else
+          {
+            pos.it--;
+            pos.id = (*pos.it)->tail;
+            pos.p_ = nullptr;
+          }
+        }
+      }
       return pos;
     }
 

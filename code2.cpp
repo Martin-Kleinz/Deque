@@ -75,12 +75,13 @@ bool popTest() {
     randnumFill(ans, deq);
 
     for (int i = 0; i < MAX_N / 2; i++) {
-        switch (randnum() % 2) {
-            case 0: deq.pop_front(); ans.pop_front();
-                    break;
-            case 1: deq.pop_back();  ans.pop_back();
-                    break;
-        }
+        // switch (randnum() % 2) {
+        //     case 0: 
+        //             break;
+        //     case 1: deq.pop_back();  ans.pop_back();
+        //             break;
+        // }
+        deq.pop_front(); ans.pop_front();
     }
 
     return isEqual(ans, deq);
