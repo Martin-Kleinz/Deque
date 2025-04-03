@@ -236,9 +236,10 @@ void test6(){
     sjtu::deque<T> p(q), r;
     r = q;
     q.clear();
-    if(!q.empty() || q.size() != 0 || q.begin()!=q.end()){puts("Wrong Answer");return;}
+    if(!q.empty() || q.size() != 0){puts("Wrong Answer1");return;}
+    if(q.begin() != q.end()) {puts("Wrong Answer1 1");return;}
     q=q=q;
-    if(!q.empty() || q.size() != 0 || q.begin()!=q.end()){puts("Wrong Answer");return;}
+    if(!q.empty() || q.size() != 0 || q.begin()!=q.end()){puts("Wrong Answer2");return;}
     for(int i=1;i<=100;i++)
     {
         int t = rand() % p.size();
@@ -253,12 +254,12 @@ void test6(){
     q = p;
     p.clear();
     q=q=q=q;
-    if(!equal()) {puts("Wrong Answer");return;}
+    if(!equal()) {puts("Wrong Answer3");return;}
     q.clear();
     q = r;
     r.clear();
     q=q=q=q;
-    if(!equal()) {puts("Wrong Answer");return;}
+    if(!equal()) {puts("Wrong Answer4");return;}
     puts("Accept");
 }
 void test7(){

@@ -276,8 +276,10 @@ bool copyAndClearTest() {
         deq = deq = deq = deq;
         if (myCounter != ansCounter) {std::cout << "2"; return false;}
 
-        deq = deq2 = deq2 = deq;
-        if (myCounter != 2 * ansCounter) {std::cout << myCounter << " " << ansCounter; return false;}
+        deq2 = deq2 = deq;
+        if (myCounter != 2 * ansCounter) {std::cout << myCounter << " 1 " << ansCounter; return false;}
+        deq = deq2;
+        if (myCounter != 2 * ansCounter) {std::cout << myCounter << " 2 " << ansCounter; return false;}
         if (!isEqual(deq, deq2)){std::cout << "4"; return false;}
 
         deq2 = deq = deq = deq2 = deq2 = deq3;

@@ -22,6 +22,12 @@ namespace sjtu
       {
         value = new T(val);
       }
+      node(node &other)
+      {
+        value = new T(*other.value);
+        prev = new node(other.prev);
+        next = new node(other.next);
+      }
       node() : prev(nullptr), next(nullptr), value(nullptr) {}
       ~node()
       {
@@ -52,12 +58,13 @@ namespace sjtu
     }
     ~double_list()
     {
-      while (head)
+      while (!empty())
       {
-        node *cur = head;
-        head = head->next;
-        delete cur;
+        delete_head();
       }
+      head->next = head->prev = tail->next = tail->prev = nullptr;
+      delete head;
+      delete tail;
     }
 
     class iterator
@@ -178,6 +185,7 @@ namespace sjtu
       nextit.list = pos.list;
       todel->prev->next = todel->next;
       todel->next->prev = todel->prev;
+      todel->next = todel->prev = nullptr;
       delete todel;
       size--;
       return nextit;
@@ -207,6 +215,7 @@ namespace sjtu
       node *todele = head->next;
       head->next = todele->next;
       todele->next->prev = head;
+      todele->next = todele->prev = nullptr;
       delete todele;
       size--;
     }
@@ -217,6 +226,7 @@ namespace sjtu
       node *todele = tail->prev;
       tail->prev = todele->prev;
       todele->prev->next = tail;
+      todele->next = todele->prev = nullptr;
       delete todele;
       size--;
     }
@@ -313,10 +323,11 @@ namespace sjtu
           {
             result.it--;
             result.id = (*result.it)->tail;
-            if(rest > 0)
+            if (rest > 0)
               throw sjtu::index_out_of_bound();
           }
-          else result.id = 0;
+          else
+            result.id = 0;
         }
         result.p_ = (*result.it)->arr[result.id];
         return result;
@@ -516,10 +527,11 @@ namespace sjtu
           {
             result.it--;
             result.id = (*result.it)->tail;
-            if(rest > 0)
+            if (rest > 0)
               throw sjtu::index_out_of_bound();
           }
-          else result.id = 0;
+          else
+            result.id = 0;
         }
         result.p_ = (*result.it)->arr[result.id];
         return result;
@@ -675,7 +687,7 @@ namespace sjtu
      */
     deque()
     {
-      dq = new double_list<CircularArray<T>*>;
+      dq = new double_list<CircularArray<T> *>;
       CircularArray<T> *first = new CircularArray<T>(capa);
       dq->insert_tail(first);
     }
@@ -683,11 +695,13 @@ namespace sjtu
     {
       dq = new double_list<CircularArray<T> *>;
       capa = other.capa;
-      CircularArray<T> *first = new CircularArray<T>(capa);
-      dq->insert_tail(first);
-      for (auto it = other.cbegin(); it != other.cend(); ++it)
+      size_ = other.size_;
+      for (auto it = other.dq->begin(); it != other.dq->end(); ++it)
       {
-        push_back((*it));
+        CircularArray<T> *newarr = new CircularArray<T>((*it)->capa);
+        for (int i = 0; i < (*it)->tail; ++i)
+          newarr->arr[newarr->tail++] = new T(*((*it)->arr[i]));
+        dq->insert_tail(newarr);
       }
     }
 
@@ -696,6 +710,10 @@ namespace sjtu
      */
     ~deque()
     {
+      while (!empty())
+      {
+        pop_back();
+      }
       delete dq;
       dq = nullptr;
     }
@@ -703,19 +721,25 @@ namespace sjtu
     /**
      * assignment operator.
      */
-    deque &operator=(const deque &other)
+    deque &operator=(const deque &other) // 两个相同的不同容器赋值时，原容器中的元素没有delete
     {
       if (this == &other)
         return *this;
-      delete dq;
-      size_ = 0;
+      while (size_ > 0)
+      {
+        pop_back();
+      }
+      while(!dq->empty()) dq->delete_head();
+      delete dq; // error !!!
       dq = new double_list<CircularArray<T> *>;
       capa = other.capa;
-      CircularArray<T> *first = new CircularArray<T>(capa);
-      dq->insert_tail(first);
-      for (auto it = other.cbegin(); it != other.cend(); ++it)
+      size_ = other.size_;
+      for (auto it = other.dq->begin(); it != other.dq->end(); ++it)
       {
-        push_back((*it));
+        CircularArray<T> *newarr = new CircularArray<T>((*it)->capa);
+        for (int i = 0; i < (*it)->tail; ++i)
+          newarr->arr[newarr->tail++] = new T(*((*it)->arr[i]));
+        dq->insert_tail(newarr);
       }
       return (*this);
     }
@@ -823,6 +847,9 @@ namespace sjtu
     {
       while (!empty())
         pop_back();
+      while(!dq->empty()) dq->delete_head();
+      CircularArray<T> *first = new CircularArray<T>(capa);
+      dq->insert_head(first);
     }
 
     /**
@@ -837,36 +864,30 @@ namespace sjtu
       if ((*pos.it)->full())
       {
         int c = std::max((*pos.it)->capa, static_cast<int>(std::sqrt(size_)) + 1);
-        iterator iter = pos;
         CircularArray<T> *left = new CircularArray<T>(c);
         CircularArray<T> *right = new CircularArray<T>(c);
         int i = 0;
-        iter.id = 0;
-        iter.p_ = (*iter.it)->arr[iter.id];
         while (i < (*pos.it)->tail / 2)
         {
-          left->arr[left->tail++] = iter.p_;
+          left->arr[left->tail++] = (*pos.it)->arr[i];
           i++;
-          iter++;
         }
-        while(i < (*pos.it)->tail)
+        while (i < (*pos.it)->tail)
         {
-          right->arr[right->tail++] = iter.p_;
+          right->arr[right->tail++] = (*pos.it)->arr[i];
           i++;
-          iter++;
         }
-        auto curit = pos.it;
-        curit = dq->erase(curit);
+        auto curit = dq->erase(pos.it);
         curit = dq->insert(curit, left);
         curit = dq->insert(++curit, right);
         if (pos.id < left->tail)
           pos.it = --curit;
-        else 
+        else
         {
           pos.id -= left->tail;
           pos.it = curit;
         }
-      pos.p_ = (*pos.it)->arr[pos.id];
+        pos.p_ = (*pos.it)->arr[pos.id];
       }
       int sum = (*pos.it)->tail - pos.id;
       (*pos.it)->tail++;
@@ -894,21 +915,21 @@ namespace sjtu
       if (pos.deq != this->dq || pos == end())
         throw sjtu::invalid_iterator();
 
-      if (pos == end() - 1)
-      {
-        auto last_block = --dq->end();
-        int last_index = (*last_block)->tail - 1;
-        delete (*last_block)->arr[last_index];
-        (*last_block)->arr[last_index] = nullptr;
-        (*last_block)->tail--;
-        size_--;
-        if ((*last_block)->tail == 0)
-        {
-          dq->erase(last_block);
-          return end();
-        }
-        return end() - 1;
-      }
+      // if (pos == end() - 1)
+      // {
+      //   auto last_block = --dq->end();
+      //   int last_index = (*last_block)->tail - 1;
+      //   delete (*last_block)->arr[last_index];
+      //   (*last_block)->arr[last_index] = nullptr;
+      //   (*last_block)->tail--;
+      //   size_--;
+      //   if ((*last_block)->tail == 0)
+      //   {
+      //     dq->erase(last_block);
+      //     return end();
+      //   }
+      //   return end() - 1;
+      // }
       int c = std::max(capa, static_cast<int>(std::sqrt(size_)));
       if (pos.it != dq->begin())
       {
@@ -930,14 +951,21 @@ namespace sjtu
           {
             newarr->arr[newarr->tail++] = (*pos.it)->arr[i];
           }
+          delete (*pos.it)->arr[pos.id];
+          size_--;
           // delete *prev_it;
           auto iter = dq->erase(prev_it);
           // delete *pos.it;
           iter = dq->erase(iter);
           pos.it = dq->insert(iter, newarr);
           pos.id = ind;
-          pos.p_ = (*pos.it)->arr[pos.id];
-          size_--;
+          if(pos.id == (*pos.it)->tail)
+          {
+            pos.it++;
+            if(pos.it == dq->end()) return end();
+            pos.id = 0;
+          }
+          pos.p_ = (*pos.it)->arr[pos.id]; 
           return pos;
         }
       }
@@ -951,6 +979,8 @@ namespace sjtu
       size_--;
       if (cur->tail == 0)
       {
+        if (empty())
+          return iterator(0, dq, dq->begin(), nullptr);
         pos.it = dq->erase(pos.it);
         if (pos.it != dq->end())
         {
