@@ -852,7 +852,7 @@ namespace sjtu
         throw sjtu::runtime_error();
       if ((*pos.it)->full())
       {
-        int c = std::max((*pos.it)->capa, static_cast<int>(std::sqrt(size_)) + 1);
+        int c = std::max((*pos.it)->capa, 2 * static_cast<int>(std::sqrt(size_)));
         CircularArray<T> *left = new CircularArray<T>(c);
         CircularArray<T> *right = new CircularArray<T>(c);
         int i = 0;
@@ -919,7 +919,7 @@ namespace sjtu
       //   }
       //   return end() - 1;
       // }
-      int c = std::max(capa, static_cast<int>(std::sqrt(size_)));
+      int c = std::max(capa, static_cast<int>(std::sqrt(size_)) / 2);
       if (pos.it != dq->begin())
       {
         auto prev_it = pos.it;
