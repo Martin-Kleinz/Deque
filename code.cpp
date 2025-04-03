@@ -200,7 +200,7 @@ void TestPopAndPush()
 
 int main()
 {
-    TestInteger();
+    TestInteger(); //return 0;
     TestMatrix();
     TestBint();
     TestCopyConstructorAndOperatorEqu();
