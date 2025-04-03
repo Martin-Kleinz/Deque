@@ -75,13 +75,12 @@ bool popTest() {
     randnumFill(ans, deq);
 
     for (int i = 0; i < MAX_N / 2; i++) {
-        // switch (randnum() % 2) {
-        //     case 0: 
-        //             break;
-        //     case 1: deq.pop_back();  ans.pop_back();
-        //             break;
-        // }
-        deq.pop_front(); ans.pop_front();
+        switch (randnum() % 2) {
+            case 0: deq.pop_front(); ans.pop_front();
+                    break;
+            case 1: deq.pop_back();  ans.pop_back();
+                    break;
+        }
     }
 
     return isEqual(ans, deq);
@@ -264,20 +263,22 @@ bool copyAndClearTest() {
 
         // empty copy and clear
         deq.clear(); deq2.clear();  deq3.clear();
-        deq = deq = deq; deq2 = deq3; deq3 = deq = deq3 = deq2;
+        deq = deq = deq; 
+        deq2 = deq3; 
+        deq3 = deq = deq3 = deq2;
 
         for (int i = 0; i < MAX_N; i++) {
             ans.push_back(DynamicType(&ansCounter));
             deq.push_back(DynamicType(&myCounter));
         }
-        if (myCounter != ansCounter) return false;
+        if (myCounter != ansCounter) {std::cout << "1"; return false;}
 
         deq = deq = deq = deq;
-        if (myCounter != ansCounter) return false;
+        if (myCounter != ansCounter) {std::cout << "2"; return false;}
 
         deq = deq2 = deq2 = deq;
-        if (myCounter != 2 * ansCounter) return false;
-        if (!isEqual(deq, deq2)) return false;
+        if (myCounter != 2 * ansCounter) {std::cout << myCounter << " " << ansCounter; return false;}
+        if (!isEqual(deq, deq2)){std::cout << "4"; return false;}
 
         deq2 = deq = deq = deq2 = deq2 = deq3;
         if (myCounter != 0) return false;
